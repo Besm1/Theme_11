@@ -1,3 +1,7 @@
+"""
+С сайта market.yandex.ru (Я.Маркет) считывает информацию о наиболее популярных шинах из каталога
+и выводит на консоль их наименование и ссылку на изображение.
+"""
 import requests
 import pprint
 from html.parser import HTMLParser

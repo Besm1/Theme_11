@@ -30,7 +30,7 @@ if __name__ == '__main__':
 print(cols)
 print(idxs)
 
-gr = {}
+gr = {} # fOR DIAGRAMS
 
 for i in idxs:
     gr[i] = pd.DataFrame(index=range(2021,2025),columns=cols, dtype=int)

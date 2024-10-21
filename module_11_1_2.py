@@ -2,16 +2,15 @@ import numpy as np
 import pandas as pd
 from pandas.core.interchange.dataframe_protocol import DataFrame
 
-
-def repl(s:str):
-    return s.replace('\n','')
+YEAR_1ST = 2021
+YEAR_LASTp1 = 2025
 
 if __name__ == '__main__':
     mtrx = {}
     df = {}
     cols = []
     idxs = set([])
-    for i in range(2021, 2025):
+    for i in range(YEAR_1ST, YEAR_LASTp1):
         # with open(f'.\\Data\\col_zakdog{i}.csv', 'r') as f:
         #     lines = f.readlines()
         # lines = [l_[:-1] for l_ in lines]
@@ -33,10 +32,10 @@ print(idxs)
 gr = {} # fOR DIAGRAMS
 
 for i in idxs:
-    gr[i] = pd.DataFrame(index=range(2021,2025),columns=cols, dtype=int)
+    gr[i] = pd.DataFrame(index=range(YEAR_1ST, YEAR_LASTp1),columns=cols, dtype=int)
     for y in range(2021,2025):
         try:
-            gr[i].loc[y] = df[y].loc[i]
+            gr[i].loc[y] = df[y].astype(dtype=int,copy=True).loc[i]
         except KeyError :
             pass
     print(f'\nContract type: {i}')
@@ -44,7 +43,7 @@ for i in idxs:
 # for i =
 # print(df[2021].columns)
 # delivery = pd.DataFrame(index=range(2021,2025), columns=df[2021].columns)
-# for i in range(2021,2025):
+# for i in range(YEAR_1ST, YEAR_LASTp1):
 #     delivery.loc[i] = df[i].loc['Роды']
 #
 # print(delivery)

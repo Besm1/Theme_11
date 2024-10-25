@@ -56,51 +56,62 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pprint
 
-YEAR_1ST = 2011 # Дата выхода организации на рынок
+YEAR_1ST = 2011  # Дата выхода организации на рынок
 
 if __name__ == '__main__':
-    df = {}     # Словарь DataFrame'ов: ключ - год, данные - DataFrame, считанный из файла
-    cols = []   # Названия колонок
-    idxs = set([])   # Уникальный набор индексов строк данных
-    year = YEAR_1ST     # Счётчик годов, начинается с первого года работы учреждения
-    year_cur = datetime.now().year      # Текущий год - последний из возможных отчётных
+    dog_quantity = {}  # Словарь DataFrame'ов: ключ - год, данные - DataFrame, считанный из файла
+    months = []  # Названия колонок
+    dog_types = set([])  # Уникальный набор индексов строк данных (= типов договоров)
+    year = YEAR_1ST  # Счётчик годов, начинается с первого года работы учреждения
+    year_cur = datetime.now().year  # Текущий год - последний из возможных отчётных
     while year <= year_cur:
         try:
             with pd.ExcelFile(f'.\\Data\\col_zakdog{year}.xlsx') as xls:
-                df[year] = pd.read_excel(io=xls, sheet_name=xls.sheet_names[0], header=5    # Пропустим 5 строк
-                                            , usecols=lambda x: 'Unnamed' not in x, index_col=0 ) # и все колонки без заголовков
+                dog_quantity[year] = pd.read_excel(io=xls, sheet_name=xls.sheet_names[0], header=5
+                                                   # Заголовок в 6-й строке (в строке 5, если считать от 0)
+                                                   , usecols=lambda x: 'Unnamed' not in x,
+                                                   index_col=0)  # и все колонки без заголовков
                 # 'Unnamed' - это специальное псевдо-имя колонки, которое обозначает колонку без заголовка
-            if len(cols) == 0 or len(cols) > len(df[year].columns): # 1) len(cols) == 0 -- условие инициализации индексов
-                cols = df[year].columns                 # 2) len(cols) > len(...) -- это возможно только тогда, когда
-                                                        #   текущий файл - самый "короткий", тогда список
-                                                        #   используемых колонок берём из него
-            idxs = idxs | set(df[year].index) # Добавляем все индексы из текущего файла -- вдруг какой-то новый тип договора
-                                        #   в нём добавился. set() делает этот список уникальным.
+            if len(months) == 0 or len(months) > len(
+                    dog_quantity[year].columns):  # 1) len(months) == 0 -- условие инициализации индексов
+                months = dog_quantity[year].columns  # 2) len(months) > len(...) -- это возможно только тогда, когда
+                #   текущий файл - самый "короткий", тогда список
+                #   используемых колонок берём из него
+            dog_types = (dog_types
+                         | set(dog_quantity[year].index))  # Добавляем все индексы из текущего файла -- вдруг какой-то новый тип договора
+            #   в нём добавился. set() делает этот список уникальным.
         except FileNotFoundError:
-            pass            # Файл за любой год может отсутствовать - это нормально
+            pass  # Файл за любой год может отсутствовать - это нормально
         finally:
-            year += 1       # В любом случае - проверим следующий год
+            year += 1  # В любом случае - проверим следующий год
 
-pprint.pprint(idxs)
+# Усечём DF по самому короткому году, исключив строку "ИТОГО"
+for year in dog_quantity.keys():
+    dog_quantity[year] = dog_quantity[year].loc[
+        [dog_type for dog_type in dog_quantity[year].index if dog_type != 'ИТОГО'], months]
 
-gr = {} # DFs for diagrams - если графики помесячные закажут
-grs = {}    # DFs с суммами по всем месяцам - для графика суммарных значений
+diag_full = {}  # DFs for diagrams - если графики помесячные закажут
+diag_sum = {}   # DFs с суммами по всем месяцам - для графика суммарных значений
 
-for i in idxs:  # Индексы соответствуют названию договоров
-    if i in('Роды', 'Ведение беременности', 'Госпитализация', 'Детство'):    # Обрабатываем только эти договоры
+for dog_type in dog_types:  # Индексы соответствуют названию договоров
+    if dog_type in ('Роды', 'Ведение беременности', 'Госпитализация', 'Детство'):  # Обрабатываем только эти договоры
         # Готовим DataFrame'ы
-        gr[i] = pd.DataFrame(index=list(df.keys()),columns=cols, dtype=int)     # Обрезаем колонки по длине cols
-        grs[i] = pd.DataFrame(index=list(df.keys()), columns=['Всего'], dtype=int) # В суммарном - только одна колонка
-        for y in df.keys(): # Перебираем по годам (это ключи набора матриц) исходных DF, данными наполняем DataFrame'ы
+        diag_full[dog_type] = pd.DataFrame(index=list(dog_quantity.keys()), columns=months,
+                                           dtype=int)  # Обрезаем колонки по длине cols
+        diag_sum[dog_type] = pd.DataFrame(index=list(dog_quantity.keys()), columns=['Всего'],
+                                          dtype=int)  # В суммарном - только одна колонка
+        for year in dog_quantity.keys():  # Перебираем по годам (это ключи набора матриц) исходных DF, данными наполняем DataFrame'ы
             try:
-                gr[i].loc[y] = df[y].astype(dtype=int,copy=True).loc[i] # Это помесячный фрейм
-                grs[i].loc[y] = sum(df[y].astype(dtype=int,copy=True).loc[i])   # Это фрейм итоговых сумм
-            except KeyError:    # не во всех файлах есть все типы договоров
+                diag_full[dog_type].loc[year] = dog_quantity[year].astype(dtype=int, copy=True).loc[
+                    dog_type]  # [:len(cols)] # Это помесячный фрейм
+                diag_sum[dog_type].loc[year] = sum(dog_quantity[year].astype(dtype=int, copy=True).loc[
+                                                  dog_type])  # [:len(cols)])   # Это фрейм итоговых сумм
+            except KeyError:  # не во всех файлах есть все типы договоров
                 pass
-        print(f'\nContract type: {i}')
-        print(grs[i])
+        print(f'\nContract type: {dog_type}')
+        print(diag_sum[dog_type])
 
-        grs[i].plot.line()      # Подготавливаем линейный график
+        diag_sum[dog_type].plot.line()  # Подготавливаем линейный график
         # gr[i].transpose().plot.bar(stacked=True)  # Пробовал - не понравилось...
-        plt.title(label=f'Договоры "{i}", годы с {grs[i].index[0]} по {grs[i].index[-1]}.')
+        plt.title(label=f'Договоры "{dog_type}", годы с {diag_sum[dog_type].index[0]} по {diag_sum[dog_type].index[-1]}.')
         plt.show()  # Рисуем

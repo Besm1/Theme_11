@@ -1,4 +1,4 @@
-""""
+"""
 Задача.
 Имеются файлы типа MS Excel с годовыми отчётами некой коммерческой медицинской организации по помесячному количеству
 заключённых договоров в разрезе их типов:
@@ -54,7 +54,6 @@
 from datetime import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
-import pprint
 
 YEAR_1ST = 2011  # Дата выхода организации на рынок
 

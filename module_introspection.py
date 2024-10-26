@@ -1,10 +1,7 @@
 import inspect
-from enum import member
 from pprint import pprint
 from requests import HTTPError
 from threading import Lock
-
-from pandas.core.dtypes.inference import is_iterator
 
 
 class Bank:

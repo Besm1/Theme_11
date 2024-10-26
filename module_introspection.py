@@ -2,6 +2,7 @@ import inspect
 from enum import member
 from pprint import pprint
 from requests import HTTPError
+from threading import Lock
 
 from pandas.core.dtypes.inference import is_iterator
 
@@ -70,6 +71,7 @@ def introspection_info(obj):
         metadata['Module (__module__)'] = obj.__module__
     except Exception:
         metadata['Module (__module__)'] = None
+    metadata['Module (getmodule)'] = inspect.getmodule(obj)
     metadata['Type'] = type(obj)
     metadata['Methods (public)'] = [memb for memb in dir(obj) if callable(getattr(obj, memb))
                                     and not memb.startswith('_')]
@@ -81,13 +83,10 @@ def introspection_info(obj):
     metadata['Attributes (dunder)'] = [memb for memb in dir(obj) if not callable(getattr(obj, memb)) and memb.startswith('__')]
     metadata['Attributes (private)'] = [memb for memb in dir(obj) if not callable(getattr(obj, memb))
                                      and not memb.startswith('__') and memb.startswith('_')]
-    metadata['Module'] = inspect.getmodule(object=obj)
     metadata['Members (all)'] = inspect.getmembers(obj)
     metadata['Members (func)'] = inspect.getmembers(obj, predicate=inspect.isfunction)
     metadata['Members (meth)'] = inspect.getmembers(obj, predicate=inspect.ismethod)
-    # metadata['Attributes'] = [getattr(obj, a_) for a_ in dir(obj)]
     metadata['Callable'] = callable(obj)
-    # metadata['']
 
     return metadata
 
@@ -98,6 +97,8 @@ print('\n\n*** Call: introspection_info(int)')
 pprint(introspection_info(int))
 print('\n\n*** Call: introspection_info(Bank)')
 pprint(introspection_info(Bank))
+print('\n\n*** Call: introspection_info(Bank())')
+pprint(introspection_info(Bank(500)))
 print('\n\n*** Call: introspection_info(inspect)')
 pprint(introspection_info(inspect))
 print('\n\n*** Call: introspection_info(HTTPError)')
